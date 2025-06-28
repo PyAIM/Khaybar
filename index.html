@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KHAYBAR</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e);
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255,0,0,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0,0,255,0.1) 0%, transparent 50%),
+                linear-gradient(180deg, #000033 0%, #001122 50%, #000000 100%);
+        }
+        
+        .hud {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            right: 0;
+            height: 160px;
+            background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+            border-bottom: 3px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            z-index: 100;
+        }
+        
+        .city-status {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border: 2px solid;
+            border-radius: 8px;
+            min-width: 200px;
+        }
+        
+        .fares-status {
+            border-color: #ff0040;
+            color: #ff0040;
+        }
+        
+        .zohon-status {
+            border-color: #0080ff;
+            color: #0080ff;
+        }
+        
+        .city-name {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .health-bar {
+            width: 150px;
+            height: 15px;
+            background: #333;
+            border: 2px solid currentColor;
+            margin-bottom: 5px;
+            position: relative;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, currentColor, rgba(255,255,255,0.3));
+            transition: width 0.5s ease;
+        }
+        
+        .tokens {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .match-score {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #00ff00;
+        }
+        
+        .turn-indicator {
+            text-align: center;
+            color: #00ff00;
+        }
+        
+        .game-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: #ffaa00;
+            text-shadow: 0 0 20px #ffaa00;
+            margin-bottom: 5px;
+        }
+        
+        .game-credits {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .current-turn {
+            font-size: 28px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px #00ff00;
+        }
+        
+        .round-info {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #ffaa00;
+        }
+        
+        .timer {
+            font-size: 20px;
+            font-weight: 900;
+            color: #ff4400;
+            text-shadow: 0 0 10px #ff4400;
+            margin-bottom: 10px;
+        }
+        
+        .timer.warning {
+            color: #ff0000;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .battlefield {
+            position: absolute;
+            top: 200px;
+            left: 0;
+            right: 0;
+            bottom: 200px;
+            background: 
+                linear-gradient(180deg, 
+                    rgba(0,20,40,0.8) 0%, 
+                    rgba(0,40,80,0.6) 30%, 
+                    rgba(0,60,120,0.4) 60%, 
+                    rgba(0,80,160,0.2) 100%),
+                repeating-linear-gradient(90deg, 
+                    transparent, transparent 98px, 
+                    rgba(0,255,255,0.1) 100px),
+                repeating-linear-gradient(0deg, 
+                    transparent, transparent 98px, 
+                    rgba(0,255,255,0.1) 100px);
+            border: 2px solid rgba(0,200,255,0.3);
+            overflow: hidden;
+        }
+        
+        .city {
+            position: absolute;
+            bottom: 0;
+            width: 200px;
+            height: 120px;
+            background: linear-gradient(180deg, #444, #222);
+            border: 3px solid;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .fares-city {
+            left: 50px;
+            border-color: #ff0040;
+            color: #ff0040;
+            background: linear-gradient(180deg, #440011, #220008);
+        }
+        
+        .zohon-city {
+            right: 50px;
+            border-color: #0080ff;
+            color: #0080ff;
+            background: linear-gradient(180deg, #001144, #000822);
+        }
+        
+        .control-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(180deg, #1a1a1a, #0a0a0a);
+            border-top: 3px solid #00ff00;
+            display: flex;
+            overflow-x: auto;
+            padding: 15px;
+            gap: 15px;
+        }
+        
+        .weapon-category {
+            min-width: 250px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .category-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-align: center;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .weapon-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .weapon-btn {
+            background: linear-gradient(145deg, #333, #111);
+            border: 2px solid #555;
+            color: #fff;
+            padding: 8px;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-align: center;
+            min-height: 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .weapon-btn:hover {
+            border-color: #00ff00;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0,255,0,0.3);
+        }
+        
+        .weapon-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .weapon-cost {
+            font-size: 9px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(145deg, #006600, #003300);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 20px;
+            font-family: 'Orbitron', monospace;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .action-btn:hover {
+            background: linear-gradient(145deg, #00aa00, #005500);
+            box-shadow: 0 0 15px rgba(0,255,0,0.5);
+        }
+        
+        .audio-controls {
+            position: absolute;
+            top: 50px;
+            right: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 150;
+            align-items: flex-start;
+        }
+        
+        .audio-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .audio-sliders {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .audio-btn {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .projectile {
+            position: absolute;
+            z-index: 50;
+            transition: none;
+        }
+        
+        .missile {
+            width: 6px;
+            height: 20px;
+            background: linear-gradient(180deg, #ffff00, #ff8800);
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 0 8px #ffff00;
+        }
+        
+        .hypersonic-missile {
+            width: 8px;
+            height: 25px;
+            background: linear-gradient(180deg, #ff00ff, #8800ff);
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 0 12px #ff00ff;
+        }
+        
+        .drone {
+            width: 12px;
+            height: 8px;
+            background: linear-gradient(90deg, #00ffff, #0088ff);
+            border-radius: 6px;
+            box-shadow: 0 0 6px #00ffff;
+        }
+        
+        .bomber {
+            width: 20px;
+            height: 12px;
+            background: linear-gradient(90deg, #888888, #444444);
+            border-radius: 10px 2px 2px 10px;
+            box-shadow: 0 0 8px #666666;
+        }
+        
+        .ghost-bomber {
+            width: 28px;
+            height: 16px;
+            background: linear-gradient(90deg, rgba(100,100,100,0.7), rgba(50,50,50,0.7));
+            border-radius: 14px 4px 4px 14px;
+            box-shadow: 0 0 15px rgba(150,150,150,0.5);
+            opacity: 0.8;
+        }
+        
+        .explosion {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            z-index: 75;
+            animation: explode 0.8s ease-out forwards;
+        }
+        
+        .explosion::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, 
+                #ffff00 0%, 
+                #ff8800 20%, 
+                #ff4400 40%, 
+                #ff0000 60%, 
+                #880000 80%, 
+                transparent 100%);
+            border-radius: 50%;
+            animation: explosion-flash 0.8s ease-out forwards;
+        }
+        
+        .explosion::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            background: radial-gradient(circle, 
+                #ffffff 0%, 
+                #ffff88 30%, 
+                transparent 70%);
+            border-radius: 50%;
+            animation: explosion-core 0.6s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.9; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        @keyframes explosion-flash {
+            0% { transform: scale(0.5); opacity: 1; }
+            30% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        @keyframes explosion-core {
+            0% { transform: scale(0); opacity: 1; }
+            40% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        
+        .damage-indicator {
+            position: absolute;
+            color: #ff0000;
+            font-size: 24px;
+            font-weight: 900;
+            text-shadow: 0 0 10px #ff0000;
+            animation: damage-float 1s ease-out forwards;
+            z-index: 80;
+        }
+        
+        @keyframes damage-float {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.5); opacity: 0; }
+        }
+        
+        .bonus-box {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, #ffaa00, #ff8800);
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 900;
+            color: #000;
+            animation: bonus-drop 3s linear forwards;
+            z-index: 60;
+        }
+        
+        @keyframes bonus-drop {
+            0% { transform: translateY(0); opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(400px); opacity: 0.7; }
+        }
+        
+        .bonus-indicator {
+            position: absolute;
+            color: #ffaa00;
+            font-size: 18px;
+            font-weight: 900;
+            text-shadow: 0 0 10px #ffaa00;
+            animation: bonus-float 1.5s ease-out forwards;
+            z-index: 85;
+        }
+        
+        @keyframes bonus-float {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.3); opacity: 0; }
+        }
+        
+        .round-result {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #000033, #000066);
+            border: 4px solid #ffaa00;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            color: #ffaa00;
+            font-size: 32px;
+            font-weight: 900;
+            text-shadow: 0 0 20px #ffaa00;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 0 30px rgba(255,170,0,0.5);
+        }
+        
+        .round-result .winner {
+            font-size: 48px;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        .round-result .bonus {
+            font-size: 18px;
+            color: #00ff00;
+            margin-top: 15px;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(145deg, #000033, #000066);
+            border: 4px solid #ffaa00;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            color: #ffaa00;
+            font-size: 32px;
+            font-weight: 900;
+            text-shadow: 0 0 20px #ffaa00;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 0 30px rgba(255,170,0,0.5);
+        }
+        
+        .instructions-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 300;
+            display: none;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .instructions-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #001122, #002244);
+            border: 3px solid #00ff00;
+            border-radius: 15px;
+            padding: 30px;
+            color: #00ff00;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .instructions-title {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffaa00;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #ffaa00;
+        }
+        
+        .instructions-section {
+            margin-bottom: 20px;
+        }
+        
+        .instructions-section h3 {
+            font-size: 18px;
+            color: #ffaa00;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #ffaa00;
+        }
+        
+        .instructions-section p, .instructions-section li {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        
+        .instructions-section ul {
+            margin-left: 20px;
+        }
+        
+        .weapon-info {
+            background: rgba(0, 50, 0, 0.3);
+            padding: 10px;
+            border-left: 3px solid #00ff00;
+            margin: 10px 0;
+        }
+        
+        .close-instructions {
+            background: linear-gradient(145deg, #006600, #003300);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 24px;
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
+            font-weight: 900;
+            cursor: pointer;
+            border-radius: 8px;
+            display: block;
+            margin: 30px auto 0;
+            transition: all 0.3s;
+        }
+        
+        .close-instructions:hover {
+            background: linear-gradient(145deg, #00aa00, #005500);
+            box-shadow: 0 0 15px rgba(0,255,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="audio-controls">
+            <div class="audio-buttons">
+                <button class="audio-btn" onclick="toggleMusic()" id="musicToggle">♪ MUSIC: ON</button>
+                <button class="audio-btn" onclick="toggleSFX()" id="sfxToggle">♫ SFX: ON</button>
+            </div>
+            <div class="audio-sliders">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 8px; color: #00ff00; width: 35px;">MUSIC</span>
+                    <input type="range" id="musicVolumeSlider" min="0" max="100" value="50" 
+                           style="width: 80px; height: 4px;" onchange="updateMusicVolume(this.value)">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 8px; color: #00ff00; width: 35px;">SFX</span>
+                    <input type="range" id="sfxVolumeSlider" min="0" max="100" value="50" 
+                           style="width: 80px; height: 4px;" onchange="updateSFXVolume(this.value)">
+                </div>
+            </div>
+        </div>
+        
+        <div class="hud">
+            <div class="city-status fares-status">
+                <div class="city-name">FARES</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="faresHealth" style="width: 100%"></div>
+                </div>
+                <div>Health: <span id="faresHealthText">150</span>/150</div>
+                <div class="tokens">Tokens: <span id="faresTokens">1000</span></div>
+                <div class="match-score">Rounds Won: <span id="faresScore">0</span></div>
+            </div>
+            
+            <div class="turn-indicator">
+                <div class="game-title">KHAYBAR</div>
+                <div class="game-credits">Creator: M. Ben-Azzouz and Claude Sonnet 4</div>
+                <div class="round-info" id="roundInfo">ROUND 1 - FIRST TO 3 WINS</div>
+                <div class="timer" id="timer">2:00</div>
+                <div class="current-turn" id="currentTurn">FARES TURN</div>
+                <button class="action-btn" onclick="startGame()">START GAME</button>
+                <button class="action-btn" onclick="toggleAI()" id="aiToggle">VS AI: OFF</button>
+                <button class="action-btn" onclick="showInstructions()" style="margin-top: 10px;">HOW TO PLAY</button>
+            </div>
+            
+            <div class="city-status zohon-status">
+                <div class="city-name">ZOHON</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="zohonHealth" style="width: 100%"></div>
+                </div>
+                <div>Health: <span id="zohonHealthText">150</span>/150</div>
+                <div class="tokens">Tokens: <span id="zohonTokens">1000</span></div>
+                <div class="match-score">Rounds Won: <span id="zohonScore">0</span></div>
+            </div>
+        </div>
+        
+        <div class="battlefield" id="battlefield">
+            <div class="city fares-city">
+                <div>FARES</div>
+                <div style="font-size: 12px;">DEFENSE HQ</div>
+            </div>
+            <div class="city zohon-city">
+                <div>ZOHON</div>
+                <div style="font-size: 12px;">ATTACK BASE</div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <div class="weapon-category">
+                <div class="category-title">OFFENSIVE WEAPONS</div>
+                <div class="weapon-grid">
+                    <button class="weapon-btn" onclick="buyWeapon('standardMissile')" id="standardMissileBtn">
+                        Standard Missile<br><span class="weapon-cost">Cost: 100</span>
+                    </button>
+                    <button class="weapon-btn" onclick="buyWeapon('hypersonicMissile')" id="hypersonicMissileBtn">
+                        Hypersonic<br><span class="weapon-cost">Cost: 250</span>
+                    </button>
+                    <button class="weapon-btn" onclick="buyWeapon('attackDrone')" id="attackDroneBtn">
+                        Attack Drone<br><span class="weapon-cost">Cost: 150</span>
+                    </button>
+                    <button class="weapon-btn" onclick="buyWeapon('bomber')" id="bomberBtn">
+                        Bomber<br><span class="weapon-cost">Cost: 200</span>
+                    </button>
+                    <button class="weapon-btn" onclick="buyWeapon('ghost')" id="ghostBtn">
+                        GHOST Bomber<br><span class="weapon-cost">Cost: 320</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="weapon-category">
+                <div class="category-title">DEFENSIVE SYSTEMS</div>
+                <div class="weapon-grid">
+                    <button class="weapon-btn" onclick="buyWeapon('airDefense')" id="airDefenseBtn">
+                        Air Defense<br><span class="weapon-cost">Cost: 180</span>
+                    </button>
+                    <button class="weapon-btn" onclick="buyWeapon('missileDefense')" id="missileDefenseBtn">
+                        Missile Defense<br><span class="weapon-cost">Cost: 220</span>
+                    </button>
+                    <button class="weapon-btn" onclick="buyWeapon('repair')" id="repairBtn">
+                        Repair City<br><span class="weapon-cost">Cost: 50/10HP</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="weapon-category">
+                <div class="category-title">ATTACK PHASE</div>
+                <div class="weapon-grid">
+                    <button class="weapon-btn" onclick="launchAttack()" id="attackBtn">
+                        LAUNCH<br>ATTACK
+                    </button>
+                    <button class="weapon-btn" onclick="endTurn()" id="endTurnBtn">
+                        END<br>TURN
+                    </button>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: #00ff00;">
+                    <div>Inventory:</div>
+                    <div id="inventory">No weapons purchased</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="round-result" id="roundResult">
+            <div class="winner" id="roundWinner">FARES WINS!</div>
+            <div>Round 1 Complete</div>
+            <div class="bonus">+100 Token Bonus</div>
+            <button class="action-btn" onclick="continueToNextRound()" style="margin-top: 20px;">CONTINUE</button>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            <div id="winnerText">GAME OVER</div>
+            <button class="action-btn" onclick="resetGame()" style="margin-top: 20px;">NEW GAME</button>
+        </div>
+        
+        <div class="instructions-overlay" id="instructionsOverlay">
+            <div class="instructions-content">
+                <div class="instructions-title">HOW TO PLAY KHAYBAR</div>
+                
+                <div class="instructions-section">
+                    <h3>🎯 OBJECTIVE</h3>
+                    <p>Destroy your opponent's city or have higher health when time runs out. First to win 3 rounds wins the match!</p>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>⏱️ GAME FLOW</h3>
+                    <p>Each round lasts 2 minutes. Players take turns:</p>
+                    <ul>
+                        <li><strong>Purchase Phase:</strong> Buy up to 3 weapons (max 2 offensive)</li>
+                        <li><strong>Attack Phase:</strong> Launch weapons or end turn</li>
+                        <li><strong>Turn Switch:</strong> Other player's turn begins</li>
+                    </ul>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>🏆 WINNING CONDITIONS</h3>
+                    <ul>
+                        <li><strong>Instant Win:</strong> Reduce opponent's health to 0</li>
+                        <li><strong>Time Runs Out:</strong> Player with higher health wins</li>
+                        <li><strong>Tiebreaker:</strong> If health is tied, most tokens wins</li>
+                        <li><strong>Match Victory:</strong> First to 3 round wins</li>
+                    </ul>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>⚔️ FARES WEAPONS (Red Team)</h3>
+                    <div class="weapon-info">
+                        <strong>Standard Missile (100 tokens):</strong> 20 damage, can be intercepted by missile defense<br>
+                        <strong>Hypersonic Missile (250 tokens):</strong> 30 damage, cannot be intercepted<br>
+                        <strong>Air Defense (180 tokens):</strong> Intercepts enemy bombers and drones
+                    </div>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>🚀 ZOHON WEAPONS (Blue Team)</h3>
+                    <div class="weapon-info">
+                        <strong>Bomber (200 tokens):</strong> 25 damage, can be intercepted by air defense<br>
+                        <strong>GHOST Bomber (320 tokens):</strong> 35 damage, stealth technology<br>
+                        <strong>Missile Defense (220 tokens):</strong> Intercepts missiles and drones
+                    </div>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>🛠️ SHARED WEAPONS</h3>
+                    <div class="weapon-info">
+                        <strong>Attack Drone (150 tokens):</strong> 15 damage, can be intercepted by any defense<br>
+                        <strong>Repair (50 tokens per 10 HP):</strong> Restore city health
+                    </div>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>💰 BONUS TOKENS</h3>
+                    <p>Throughout each round, bonus token boxes (30-70 tokens) randomly drop near cities. They're automatically collected for the respective team.</p>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>⌨️ KEYBOARD SHORTCUTS</h3>
+                    <ul>
+                        <li><strong>1-8:</strong> Buy weapons (1=Standard Missile, 2=Hypersonic, etc.)</li>
+                        <li><strong>SPACEBAR:</strong> Launch attack</li>
+                        <li><strong>ENTER:</strong> End turn</li>
+                        <li><strong>M:</strong> Toggle music</li>
+                        <li><strong>S:</strong> Toggle sound effects</li>
+                    </ul>
+                </div>
+                
+                <div class="instructions-section">
+                    <h3>🤖 AI MODE</h3>
+                    <p>Toggle "VS AI: ON" to play against computer-controlled ZOHON. The AI will automatically purchase weapons and attack during its turns.</p>
+                </div>
+                
+                <button class="close-instructions" onclick="hideInstructions()">CLOSE INSTRUCTIONS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            currentPlayer: 'FARES',
+            gameStarted: false,
+            aiMode: false,
+            currentRound: 1,
+            roundsToWin: 3,
+            matchScore: { FARES: 0, ZOHON: 0 },
+            cities: {
+                FARES: { health: 150, tokens: 1000, airDefense: 0, missileDefense: 0 },
+                ZOHON: { health: 150, tokens: 1000, airDefense: 0, missileDefense: 0 }
+            },
+            inventory: {
+                FARES: {},
+                ZOHON: {}
+            },
+            weaponPrices: {
+                standardMissile: 100,
+                hypersonicMissile: 250,
+                attackDrone: 150,
+                bomber: 200,
+                airDefense: 180,
+                missileDefense: 220,
+                repair: 50,
+                ghost: 320
+            },
+            weaponDamage: {
+                standardMissile: 20,
+                hypersonicMissile: 30,
+                attackDrone: 15,
+                bomber: 25,
+                ghost: 35
+            },
+            timer: {
+                minutes: 2,
+                seconds: 0,
+                interval: null
+            },
+            weaponsPurchasedThisTurn: {
+                FARES: 0,
+                ZOHON: 0
+            },
+            offensiveWeaponsPurchasedThisTurn: {
+                FARES: 0,
+                ZOHON: 0
+            },
+            bonusBoxes: {
+                dropped: 0,
+                maxPerRound: 6
+            }
+        };
+
+        // Audio System
+        let audioContext;
+        let musicEnabled = true;
+        let sfxEnabled = true;
+        let currentMusic = null;
+        let musicVolume = 0.5;
+        let sfxVolume = 0.5;
+        let audioInitialized = false;
+        
+        function initAudio() {
+            if (audioInitialized) return;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioInitialized = true;
+                console.log('Audio initialized');
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+        
+        function playMusic(musicType) {
+            console.log('Attempting to play music:', musicType, 'enabled:', musicEnabled);
+            if (!musicEnabled) return;
+            
+            // Stop current music
+            if (currentMusic) {
+                currentMusic.pause();
+                currentMusic.currentTime = 0;
+            }
+            
+            // Create new audio element
+            const musicFiles = {
+                'menu': 'music/menu.mp3',
+                'battle': 'music/battleThemeA.mp3',
+                'gameover': 'music/gameover.mp3'
+            };
+            
+            if (musicFiles[musicType]) {
+                currentMusic = new Audio(musicFiles[musicType]);
+                currentMusic.volume = musicVolume;
+                currentMusic.loop = (musicType === 'menu' || musicType === 'battle'); // Loop menu and battle music
+                
+                // Add event listeners for debugging
+                currentMusic.addEventListener('loadstart', function() {
+                    console.log('Music loading started:', musicType);
+                });
+                currentMusic.addEventListener('canplay', function() {
+                    console.log('Music can play:', musicType);
+                });
+                currentMusic.addEventListener('error', function(e) {
+                    console.log('Music error:', musicType, e);
+                });
+                
+                currentMusic.play().then(function() {
+                    console.log('Music playing successfully:', musicType);
+                }).catch(function(error) {
+                    console.log('Could not play music:', musicType, error);
+                });
+            }
+        }
+        
+        function stopMusic() {
+            if (currentMusic) {
+                currentMusic.pause();
+                currentMusic.currentTime = 0;
+            }
+        }
+        
+        function updateMusicVolume(value) {
+            musicVolume = value / 100;
+            if (currentMusic) {
+                currentMusic.volume = musicVolume;
+            }
+        }
+        
+        function updateSFXVolume(value) {
+            sfxVolume = value / 100;
+        }
+        
+        function showInstructions() {
+            document.getElementById('instructionsOverlay').style.display = 'block';
+        }
+        
+        function hideInstructions() {
+            document.getElementById('instructionsOverlay').style.display = 'none';
+        }
+        
+        function playSound(frequency, duration, type, volume) {
+            type = type || 'sine';
+            volume = (volume || 0.3) * sfxVolume; // Apply SFX volume multiplier
+            
+            if (!audioContext || !sfxEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        function playComplexSound(frequencies, durations, types, volume) {
+            volume = volume || 0.3;
+            if (!sfxEnabled) return;
+            frequencies.forEach(function(freq, index) {
+                setTimeout(function() {
+                    playSound(freq, durations[index] || 0.1, types[index] || 'sine', volume);
+                }, index * 50);
+            });
+        }
+        
+        function playHypersonicSound() {
+            const frequencies = [800, 1200, 1600, 2000, 1600, 1200, 800, 400];
+            const durations = [0.1, 0.1, 0.1, 0.15, 0.1, 0.1, 0.1, 0.2];
+            const types = ['sine', 'triangle', 'sine', 'triangle', 'sine', 'triangle', 'sine', 'sawtooth'];
+            playComplexSound(frequencies, durations, types, 0.4);
+        }
+        
+        function playAircraftSound() {
+            const baseFreq = 200;
+            for (let i = 0; i < 10; i++) {
+                setTimeout(function() {
+                    playSound(baseFreq + Math.random() * 100, 0.2, 'sawtooth', 0.2);
+                }, i * 100);
+            }
+        }
+        
+        function playExplosionSound() {
+            playSound(80, 0.3, 'sawtooth', 0.6);
+            setTimeout(function() { playSound(200, 0.2, 'square', 0.5); }, 50);
+            setTimeout(function() { playSound(400, 0.15, 'triangle', 0.4); }, 100);
+            setTimeout(function() { playSound(60, 0.4, 'sawtooth', 0.3); }, 150);
+        }
+        
+        function playVictorySound() {
+            const melody = [523, 659, 784, 1047, 1319];
+            melody.forEach(function(note, index) {
+                setTimeout(function() { playSound(note, 0.5, 'sine'); }, index * 200);
+            });
+        }
+        
+        // Timer System
+        function startTimer() {
+            gameState.timer.minutes = 2;
+            gameState.timer.seconds = 0;
+            updateTimerDisplay();
+            
+            gameState.timer.interval = setInterval(function() {
+                if (gameState.timer.seconds > 0) {
+                    gameState.timer.seconds--;
+                } else if (gameState.timer.minutes > 0) {
+                    gameState.timer.minutes--;
+                    gameState.timer.seconds = 59;
+                } else {
+                    clearInterval(gameState.timer.interval);
+                    endRoundByTime();
+                    return;
+                }
+                
+                updateTimerDisplay();
+                
+                if (gameState.timer.minutes === 0 && gameState.timer.seconds <= 30) {
+                    if (gameState.timer.seconds % 5 === 0) {
+                        playSound(1000, 0.1, 'sine', 0.3);
+                    }
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const timerElement = document.getElementById('timer');
+            const timeString = gameState.timer.minutes + ':' + gameState.timer.seconds.toString().padStart(2, '0');
+            timerElement.textContent = timeString;
+            
+            if (gameState.timer.minutes === 0 && gameState.timer.seconds <= 30) {
+                timerElement.classList.add('warning');
+            } else {
+                timerElement.classList.remove('warning');
+            }
+        }
+        
+        function endRoundByTime() {
+            console.log('Round ended by time');
+            console.log('FARES health:', gameState.cities.FARES.health, 'tokens:', gameState.cities.FARES.tokens);
+            console.log('ZOHON health:', gameState.cities.ZOHON.health, 'tokens:', gameState.cities.ZOHON.tokens);
+            
+            const faresHealth = gameState.cities.FARES.health;
+            const zohonHealth = gameState.cities.ZOHON.health;
+            const faresTokens = gameState.cities.FARES.tokens;
+            const zohonTokens = gameState.cities.ZOHON.tokens;
+            
+            let winner = null;
+            
+            // Primary criterion: Health
+            if (faresHealth > zohonHealth) {
+                winner = 'FARES';
+                console.log('FARES wins by health:', faresHealth, 'vs', zohonHealth);
+            } else if (zohonHealth > faresHealth) {
+                winner = 'ZOHON';
+                console.log('ZOHON wins by health:', zohonHealth, 'vs', faresHealth);
+            } else {
+                // Tie in health - use tokens as tiebreaker
+                console.log('Health tied at', faresHealth, '- checking tokens');
+                if (faresTokens > zohonTokens) {
+                    winner = 'FARES';
+                    console.log('FARES wins by tokens:', faresTokens, 'vs', zohonTokens);
+                } else if (zohonTokens > faresTokens) {
+                    winner = 'ZOHON';
+                    console.log('ZOHON wins by tokens:', zohonTokens, 'vs', faresTokens);
+                } else {
+                    console.log('Complete tie - no winner');
+                }
+            }
+            
+            if (winner) {
+                endRound(winner);
+            } else {
+                // True tie - continue to next round
+                nextRound();
+            }
+        }
+
+        // Bonus Box System
+        function dropBonusBox() {
+            if (gameState.bonusBoxes.dropped >= gameState.bonusBoxes.maxPerRound) return;
+            
+            const battlefield = document.getElementById('battlefield');
+            const battlefieldRect = battlefield.getBoundingClientRect();
+            
+            const targetCity = Math.random() < 0.5 ? 'FARES' : 'ZOHON';
+            
+            const box = document.createElement('div');
+            box.className = 'bonus-box';
+            
+            const amounts = [30, 50, 70];
+            const tokenAmount = amounts[Math.floor(Math.random() * amounts.length)];
+            box.textContent = tokenAmount;
+            box.dataset.tokens = tokenAmount;
+            box.dataset.target = targetCity;
+            
+            let targetX;
+            if (targetCity === 'FARES') {
+                targetX = 150;
+            } else {
+                targetX = battlefieldRect.width - 150;
+            }
+            
+            box.style.left = targetX + 'px';
+            box.style.top = '-50px';
+            
+            if (targetCity === 'FARES') {
+                box.style.borderColor = '#ff0040';
+                box.style.boxShadow = '0 0 10px #ff0040';
+            } else {
+                box.style.borderColor = '#0080ff';
+                box.style.boxShadow = '0 0 10px #0080ff';
+            }
+            
+            battlefield.appendChild(box);
+            gameState.bonusBoxes.dropped++;
+            
+            playSound(600, 0.2, 'triangle', 0.3);
+            
+            setTimeout(function() {
+                if (box.parentNode) {
+                    collectBonusBoxAuto(box, tokenAmount, targetCity, targetX);
+                }
+            }, 2800);
+        }
+        
+        function collectBonusBoxAuto(box, amount, targetCity, x) {
+            gameState.cities[targetCity].tokens += amount;
+            showBonusIndicator(x, amount, targetCity);
+            box.remove();
+            playComplexSound([800, 1000, 1200], [0.1, 0.1, 0.2], ['sine', 'sine', 'triangle'], 0.4);
+            updateDisplay();
+        }
+        
+        function showBonusIndicator(x, amount, collector) {
+            const indicator = document.createElement('div');
+            indicator.className = 'bonus-indicator';
+            indicator.textContent = '+' + amount + ' ' + collector;
+            indicator.style.left = x + 'px';
+            indicator.style.top = '100px';
+            
+            document.getElementById('battlefield').appendChild(indicator);
+            
+            setTimeout(function() {
+                indicator.remove();
+            }, 1500);
+        }
+        
+        function scheduleBonusBoxes() {
+            const numBoxes = 5 + Math.floor(Math.random() * 3);
+            gameState.bonusBoxes.maxPerRound = numBoxes;
+            gameState.bonusBoxes.dropped = 0;
+            
+            for (let i = 0; i < numBoxes; i++) {
+                const delay = (Math.random() * 90 + 30) * 1000; // 30-120 seconds
+                setTimeout(function() {
+                    if (gameState.gameStarted && gameState.timer.interval) {
+                        dropBonusBox();
+                    }
+                }, delay);
+            }
+        }
+        
+        function toggleMusic() {
+            musicEnabled = !musicEnabled;
+            document.getElementById('musicToggle').textContent = '♪ MUSIC: ' + (musicEnabled ? 'ON' : 'OFF');
+            
+            if (musicEnabled) {
+                // Make sure audio is initialized
+                if (!audioInitialized) {
+                    initAudio();
+                }
+                // Resume appropriate music based on game state
+                if (!gameState.gameStarted) {
+                    playMusic('menu');
+                } else {
+                    playMusic('battle');
+                }
+            } else {
+                stopMusic();
+            }
+        }
+        
+        function toggleSFX() {
+            sfxEnabled = !sfxEnabled;
+            document.getElementById('sfxToggle').textContent = '♫ SFX: ' + (sfxEnabled ? 'ON' : 'OFF');
+        }
+
+        function updateDisplay() {
+            const faresHealthPercent = (gameState.cities.FARES.health / 150) * 100;
+            const zohonHealthPercent = (gameState.cities.ZOHON.health / 150) * 100;
+            
+            document.getElementById('faresHealth').style.width = faresHealthPercent + '%';
+            document.getElementById('zohonHealth').style.width = zohonHealthPercent + '%';
+            
+            document.getElementById('faresHealthText').textContent = Math.max(0, gameState.cities.FARES.health);
+            document.getElementById('zohonHealthText').textContent = Math.max(0, gameState.cities.ZOHON.health);
+            
+            document.getElementById('faresTokens').textContent = gameState.cities.FARES.tokens;
+            document.getElementById('zohonTokens').textContent = gameState.cities.ZOHON.tokens;
+            
+            document.getElementById('faresScore').textContent = gameState.matchScore.FARES;
+            document.getElementById('zohonScore').textContent = gameState.matchScore.ZOHON;
+            
+            document.getElementById('roundInfo').textContent = 'ROUND ' + gameState.currentRound + ' - FIRST TO ' + gameState.roundsToWin + ' WINS';
+            document.getElementById('currentTurn').textContent = gameState.currentPlayer + ' TURN';
+            
+            const currentInventory = gameState.inventory[gameState.currentPlayer];
+            const inventoryDiv = document.getElementById('inventory');
+            const totalPurchased = gameState.weaponsPurchasedThisTurn[gameState.currentPlayer];
+            const offensivePurchased = gameState.offensiveWeaponsPurchasedThisTurn[gameState.currentPlayer];
+            
+            if (Object.keys(currentInventory).length === 0) {
+                inventoryDiv.innerHTML = 'No weapons purchased<br><small>Total: ' + totalPurchased + '/3, Offensive: ' + offensivePurchased + '/2</small>';
+            } else {
+                const inventoryText = Object.entries(currentInventory)
+                    .map(function(entry) { return entry[0] + ': ' + entry[1]; })
+                    .join('<br>');
+                inventoryDiv.innerHTML = inventoryText + '<br><small>Total: ' + totalPurchased + '/3, Offensive: ' + offensivePurchased + '/2</small>';
+            }
+            
+            updateButtonStates();
+        }
+
+        function updateButtonStates() {
+            const currentTokens = gameState.cities[gameState.currentPlayer].tokens;
+            const isCurrentPlayerTurn = gameState.gameStarted && (!gameState.aiMode || gameState.currentPlayer === 'FARES');
+            const totalPurchased = gameState.weaponsPurchasedThisTurn[gameState.currentPlayer];
+            const offensivePurchased = gameState.offensiveWeaponsPurchasedThisTurn[gameState.currentPlayer];
+            
+            Object.keys(gameState.weaponPrices).forEach(function(weapon) {
+                const btn = document.getElementById(weapon + 'Btn');
+                if (btn) {
+                    const canAfford = currentTokens >= gameState.weaponPrices[weapon];
+                    const shouldShow = shouldShowWeapon(weapon, gameState.currentPlayer);
+                    const isOffensive = isOffensiveWeapon(weapon);
+                    
+                    const totalLimit = totalPurchased >= 3;
+                    const offensiveLimit = isOffensive && offensivePurchased >= 2;
+                    const purchaseBlocked = totalLimit || offensiveLimit;
+                    
+                    btn.disabled = !canAfford || !shouldShow || !isCurrentPlayerTurn || purchaseBlocked;
+                    btn.style.display = shouldShow ? 'flex' : 'none';
+                    
+                    if (purchaseBlocked && shouldShow) {
+                        btn.style.opacity = '0.3';
+                    } else {
+                        btn.style.opacity = btn.disabled ? '0.5' : '1';
+                    }
+                }
+            });
+            
+            document.getElementById('attackBtn').disabled = !isCurrentPlayerTurn || Object.keys(gameState.inventory[gameState.currentPlayer]).length === 0;
+            document.getElementById('endTurnBtn').disabled = !isCurrentPlayerTurn;
+        }
+
+        function shouldShowWeapon(weapon, player) {
+            if (weapon === 'hypersonicMissile') return player === 'FARES';
+            if (weapon === 'standardMissile') return player === 'FARES';
+            if (weapon === 'bomber') return player === 'ZOHON';
+            if (weapon === 'ghost') return player === 'ZOHON';
+            if (weapon === 'attackDrone') return true;
+            if (weapon === 'airDefense') return player === 'FARES';
+            if (weapon === 'missileDefense') return player === 'ZOHON';
+            if (weapon === 'repair') return true;
+            return false;
+        }
+
+        function isOffensiveWeapon(weaponType) {
+            const offensiveWeapons = ['standardMissile', 'hypersonicMissile', 'attackDrone', 'bomber', 'ghost'];
+            return offensiveWeapons.includes(weaponType);
+        }
+
+        function buyWeapon(weaponType) {
+            if (!gameState.gameStarted) return;
+            
+            const currentPlayer = gameState.currentPlayer;
+            const cost = gameState.weaponPrices[weaponType];
+            
+            const totalPurchased = gameState.weaponsPurchasedThisTurn[currentPlayer];
+            const offensivePurchased = gameState.offensiveWeaponsPurchasedThisTurn[currentPlayer];
+            const isOffensive = isOffensiveWeapon(weaponType);
+            
+            if (totalPurchased >= 3) {
+                playSound(200, 0.3, 'sawtooth');
+                return;
+            }
+            
+            if (isOffensive && offensivePurchased >= 2) {
+                playSound(200, 0.3, 'sawtooth');
+                return;
+            }
+            
+            if (gameState.cities[currentPlayer].tokens < cost) {
+                playSound(200, 0.3, 'sawtooth');
+                return;
+            }
+            
+            if (weaponType === 'repair') {
+                const maxRepair = Math.min((150 - gameState.cities[currentPlayer].health), 
+                                         Math.floor(gameState.cities[currentPlayer].tokens / 5));
+                const repairAmount = Math.min(maxRepair, 10);
+                const repairCost = repairAmount * 5;
+                
+                if (repairAmount > 0) {
+                    gameState.cities[currentPlayer].health += repairAmount;
+                    gameState.cities[currentPlayer].tokens -= repairCost;
+                    gameState.weaponsPurchasedThisTurn[currentPlayer]++;
+                    playSound(500, 0.3, 'sine');
+                }
+                updateDisplay();
+                return;
+            }
+            
+            gameState.cities[currentPlayer].tokens -= cost;
+            gameState.weaponsPurchasedThisTurn[currentPlayer]++;
+            
+            if (isOffensive) {
+                gameState.offensiveWeaponsPurchasedThisTurn[currentPlayer]++;
+            }
+            
+            if (!gameState.inventory[currentPlayer][weaponType]) {
+                gameState.inventory[currentPlayer][weaponType] = 0;
+            }
+            gameState.inventory[currentPlayer][weaponType]++;
+            
+            if (weaponType === 'airDefense') {
+                gameState.cities[currentPlayer].airDefense++;
+            } else if (weaponType === 'missileDefense') {
+                gameState.cities[currentPlayer].missileDefense++;
+            }
+            
+            playSound(700, 0.2, 'square');
+            updateDisplay();
+        }
+
+        function getProjectileClass(weaponType) {
+            const classes = {
+                'standardMissile': 'missile',
+                'hypersonicMissile': 'hypersonic-missile',
+                'attackDrone': 'drone',
+                'bomber': 'bomber',
+                'ghost': 'ghost-bomber'
+            };
+            return classes[weaponType] || 'missile';
+        }
+
+        function launchAttack() {
+            if (!gameState.gameStarted) return;
+            
+            const attacker = gameState.currentPlayer;
+            const defender = attacker === 'FARES' ? 'ZOHON' : 'FARES';
+            const inventory = gameState.inventory[attacker];
+            
+            if (Object.keys(inventory).length === 0) return;
+            
+            let totalDamage = 0;
+            const attackSequence = [];
+            
+            Object.entries(inventory).forEach(function(entry) {
+                const weapon = entry[0];
+                const count = entry[1];
+                if (count > 0 && gameState.weaponDamage[weapon]) {
+                    for (let i = 0; i < count; i++) {
+                        let damage = gameState.weaponDamage[weapon];
+                        let intercepted = false;
+                        
+                        // Check for interceptions
+                        if (weapon === 'standardMissile' && gameState.cities[defender].missileDefense > 0) {
+                            if (Math.random() < 0.7) {
+                                intercepted = true;
+                                damage = 0;
+                            }
+                        } else if (weapon === 'attackDrone') {
+                            if ((defender === 'FARES' && gameState.cities[defender].airDefense > 0) ||
+                                (defender === 'ZOHON' && gameState.cities[defender].missileDefense > 0)) {
+                                if (Math.random() < 0.6) {
+                                    intercepted = true;
+                                    damage = 0;
+                                }
+                            }
+                        } else if (weapon === 'bomber' && gameState.cities[defender].airDefense > 0) {
+                            if (Math.random() < 0.6) {
+                                intercepted = true;
+                                damage = 0;
+                            }
+                        }
+                        
+                        attackSequence.push({ weapon: weapon, damage: damage, intercepted: intercepted });
+                        totalDamage += damage;
+                    }
+                }
+            });
+            
+            gameState.cities[defender].health -= totalDamage;
+            gameState.cities[defender].health = Math.max(0, gameState.cities[defender].health);
+            
+            gameState.inventory[attacker] = {};
+            
+            animateAttack(attacker, defender, attackSequence, totalDamage);
+            updateDisplay();
+            
+            setTimeout(function() {
+                if (gameState.cities[defender].health <= 0) {
+                    endRound(attacker);
+                } else {
+                    endTurn();
+                }
+            }, 3000);
+        }
+
+        function animateAttack(attacker, defender, attackSequence, totalDamage) {
+            const battlefield = document.getElementById('battlefield');
+            const battlefieldRect = battlefield.getBoundingClientRect();
+            
+            const attackerSide = attacker === 'FARES' ? 'left' : 'right';
+            const defenderSide = defender === 'FARES' ? 'left' : 'right';
+            
+            let delay = 0;
+            
+            attackSequence.forEach(function(attack, index) {
+                setTimeout(function() {
+                    const projectile = document.createElement('div');
+                    projectile.className = 'projectile ' + getProjectileClass(attack.weapon);
+                    
+                    const startX = attackerSide === 'left' ? 100 : battlefieldRect.width - 100;
+                    const endX = defenderSide === 'left' ? 100 : battlefieldRect.width - 100;
+                    const startY = Math.random() * (battlefieldRect.height - 100) + 50;
+                    const endY = battlefieldRect.height - 60;
+                    
+                    projectile.style.left = startX + 'px';
+                    projectile.style.top = startY + 'px';
+                    
+                    battlefield.appendChild(projectile);
+                    
+                    // Play appropriate launch sound
+                    if (attack.weapon === 'hypersonicMissile') {
+                        playHypersonicSound();
+                    } else if (attack.weapon === 'bomber' || attack.weapon === 'ghost') {
+                        playAircraftSound();
+                    } else if (attack.weapon === 'attackDrone') {
+                        playComplexSound([400, 500, 400], [0.1, 0.2, 0.1], ['triangle', 'square', 'triangle']);
+                    } else if (attack.weapon === 'standardMissile') {
+                        playSound(800, 0.3, 'square');
+                    }
+                    
+                    // Different speeds for different weapons
+                    const duration = attack.weapon === 'hypersonicMissile' ? 600 : 
+                                   (attack.weapon === 'bomber' || attack.weapon === 'ghost') ? 2000 : 1200;
+                    const startTime = Date.now();
+                    
+                    function animateProjectile() {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        
+                        const currentX = startX + (endX - startX) * progress;
+                        const currentY = startY + (endY - startY) * progress * progress; // Parabolic trajectory
+                        
+                        projectile.style.left = currentX + 'px';
+                        projectile.style.top = currentY + 'px';
+                        
+                        // Rotate projectile based on movement direction
+                        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+                        projectile.style.transform = 'rotate(' + (angle + 90) + 'deg)';
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animateProjectile);
+                        } else {
+                            projectile.remove();
+                            
+                            if (!attack.intercepted) {
+                                createExplosion(endX, endY);
+                                playExplosionSound();
+                            } else {
+                                playComplexSound([400, 350, 300], [0.1, 0.1, 0.1], ['triangle', 'triangle', 'triangle']);
+                                createInterceptionEffect(currentX, currentY);
+                            }
+                        }
+                    }
+                    
+                    animateProjectile();
+                }, delay);
+                
+                delay += 400;
+            });
+            
+            if (totalDamage > 0) {
+                setTimeout(function() {
+                    showDamageIndicator(defenderSide, totalDamage);
+                }, delay + 200);
+            }
+        }
+
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = (x - 40) + 'px';
+            explosion.style.top = (y - 40) + 'px';
+            
+            document.getElementById('battlefield').appendChild(explosion);
+            
+            setTimeout(function() {
+                explosion.remove();
+            }, 800);
+        }
+
+        function createInterceptionEffect(x, y) {
+            const effect = document.createElement('div');
+            effect.style.position = 'absolute';
+            effect.style.left = (x - 15) + 'px';
+            effect.style.top = (y - 15) + 'px';
+            effect.style.width = '30px';
+            effect.style.height = '30px';
+            effect.style.background = 'radial-gradient(circle, #00ff00, #88ff88, transparent)';
+            effect.style.borderRadius = '50%';
+            effect.style.animation = 'explode 0.4s ease-out forwards';
+            effect.style.zIndex = '70';
+            
+            document.getElementById('battlefield').appendChild(effect);
+            
+            setTimeout(function() {
+                effect.remove();
+            }, 400);
+        }
+
+        function showDamageIndicator(side, damage) {
+            const battlefield = document.getElementById('battlefield');
+            const battlefieldRect = battlefield.getBoundingClientRect();
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'damage-indicator';
+            indicator.textContent = '-' + damage;
+            
+            const x = side === 'left' ? 150 : battlefieldRect.width - 150;
+            const y = battlefieldRect.height - 100;
+            
+            indicator.style.left = x + 'px';
+            indicator.style.top = y + 'px';
+            
+            battlefield.appendChild(indicator);
+            
+            setTimeout(function() {
+                indicator.remove();
+            }, 1000);
+        }
+
+        function endTurn() {
+            if (!gameState.gameStarted) return;
+            
+            gameState.weaponsPurchasedThisTurn[gameState.currentPlayer] = 0;
+            gameState.offensiveWeaponsPurchasedThisTurn[gameState.currentPlayer] = 0;
+            
+            gameState.currentPlayer = gameState.currentPlayer === 'FARES' ? 'ZOHON' : 'FARES';
+            updateDisplay();
+            
+            // Trigger AI turn if enabled and it's ZOHON's turn
+            if (gameState.aiMode && gameState.currentPlayer === 'ZOHON') {
+                setTimeout(function() {
+                    executeAITurn();
+                }, 1000); // 1 second delay to make it feel more natural
+            }
+        }
+
+        function endRound(winner) {
+            gameState.matchScore[winner]++;
+            gameState.cities[winner].tokens += 100;
+            
+            updateDisplay();
+            
+            // Show round result screen
+            showRoundResult(winner);
+            
+            playVictorySound();
+        }
+
+        function showRoundResult(winner) {
+            const roundResultDiv = document.getElementById('roundResult');
+            const roundWinnerDiv = document.getElementById('roundWinner');
+            
+            roundWinnerDiv.textContent = winner + ' WINS!';
+            roundResultDiv.querySelector('div:nth-child(2)').textContent = 'Round ' + gameState.currentRound + ' Complete';
+            
+            roundResultDiv.style.display = 'block';
+        }
+
+        function continueToNextRound() {
+            document.getElementById('roundResult').style.display = 'none';
+            
+            if (gameState.matchScore.FARES >= gameState.roundsToWin || 
+                gameState.matchScore.ZOHON >= gameState.roundsToWin) {
+                // Determine match winner
+                let matchWinner = null;
+                if (gameState.matchScore.FARES >= gameState.roundsToWin) {
+                    matchWinner = 'FARES';
+                } else if (gameState.matchScore.ZOHON >= gameState.roundsToWin) {
+                    matchWinner = 'ZOHON';
+                }
+                endMatch(matchWinner);
+            } else {
+                nextRound();
+            }
+        }
+
+        function nextRound() {
+            gameState.currentRound++;
+            
+            gameState.cities.FARES = { health: 150, tokens: 1000, airDefense: 0, missileDefense: 0 };
+            gameState.cities.ZOHON = { health: 150, tokens: 1000, airDefense: 0, missileDefense: 0 };
+            gameState.inventory.FARES = {};
+            gameState.inventory.ZOHON = {};
+            gameState.weaponsPurchasedThisTurn.FARES = 0;
+            gameState.weaponsPurchasedThisTurn.ZOHON = 0;
+            gameState.offensiveWeaponsPurchasedThisTurn.FARES = 0;
+            gameState.offensiveWeaponsPurchasedThisTurn.ZOHON = 0;
+            gameState.currentPlayer = 'FARES';
+            
+            // Start new timer and bonus boxes
+            startTimer();
+            scheduleBonusBoxes();
+            
+            updateDisplay();
+            
+            // If AI mode is on and it's ZOHON's turn, start AI
+            if (gameState.aiMode && gameState.currentPlayer === 'ZOHON') {
+                setTimeout(function() {
+                    executeAITurn();
+                }, 1000);
+            }
+        }
+
+        function endMatch(winner) {
+            gameState.gameStarted = false;
+            
+            // Stop timer if running
+            if (gameState.timer.interval) {
+                clearInterval(gameState.timer.interval);
+                gameState.timer.interval = null;
+            }
+            
+            // Play game over music with a delay to ensure it plays
+            setTimeout(function() {
+                playMusic('gameover');
+            }, 500);
+            
+            const gameOverDiv = document.getElementById('gameOver');
+            const winnerText = document.getElementById('winnerText');
+            
+            if (winner) {
+                winnerText.innerHTML = '<div style="font-size: 48px; margin-bottom: 20px;">' + winner + ' WINS!</div><div style="font-size: 24px;">MATCH COMPLETE</div>';
+            } else {
+                winnerText.innerHTML = '<div style="font-size: 48px; margin-bottom: 20px;">TIE GAME!</div><div style="font-size: 24px;">MATCH COMPLETE</div>';
+            }
+            
+            gameOverDiv.style.display = 'block';
+            
+            // Enhanced victory fanfare
+            const victoryMelody = [523, 659, 784, 1047, 1319, 1047, 784, 659, 523];
+            victoryMelody.forEach(function(note, index) {
+                setTimeout(function() { playSound(note, 0.3, 'sine'); }, index * 150);
+            });
+        }
+
+        function toggleAI() {
+            gameState.aiMode = !gameState.aiMode;
+            const button = document.getElementById('aiToggle');
+            button.textContent = gameState.aiMode ? 'VS AI: ON' : 'VS AI: OFF';
+            button.style.borderColor = gameState.aiMode ? '#ffaa00' : '#00ff00';
+            button.style.color = gameState.aiMode ? '#ffaa00' : '#00ff00';
+        }
+
+        function startGame() {
+            if (gameState.gameStarted) return;
+            
+            gameState.gameStarted = true;
+            
+            // Initialize audio and switch to battle music
+            initAudio();
+            setTimeout(function() {
+                playMusic('battle');
+            }, 100);
+            
+            // Start timer and bonus boxes
+            startTimer();
+            scheduleBonusBoxes();
+            
+            updateDisplay();
+            
+            playSound(440, 0.5, 'sine');
+            
+            document.querySelector('button[onclick="startGame()"]').style.display = 'none';
+            
+            // If AI mode is on and it's ZOHON's turn, start AI
+            if (gameState.aiMode && gameState.currentPlayer === 'ZOHON') {
+                setTimeout(function() {
+                    executeAITurn();
+                }, 1000);
+            }
+        }
+
+        // AI System
+        function executeAITurn() {
+            if (!gameState.gameStarted || gameState.currentPlayer !== 'ZOHON' || !gameState.aiMode) return;
+            
+            const aiTokens = gameState.cities.ZOHON.tokens;
+            const aiHealth = gameState.cities.ZOHON.health;
+            const enemyHealth = gameState.cities.FARES.health;
+            
+            // AI decision making strategy
+            let actionsToTake = [];
+            
+            // Priority 1: Repair if health is very low
+            if (aiHealth <= 50 && aiTokens >= 50) {
+                actionsToTake.push('repair');
+            }
+            
+            // Priority 2: Buy defenses if we don't have any and can afford them
+            if (gameState.cities.ZOHON.missileDefense === 0 && aiTokens >= 220) {
+                actionsToTake.push('missileDefense');
+            }
+            
+            // Priority 3: Buy offensive weapons based on available tokens and strategy
+            const offensiveOptions = [];
+            
+            // Prefer bombers (ZOHON's specialty)
+            if (aiTokens >= 200) {
+                offensiveOptions.push('bomber');
+            }
+            
+            // GHOST bomber if we have lots of tokens
+            if (aiTokens >= 320) {
+                offensiveOptions.push('ghost');
+            }
+            
+            // Attack drones as backup
+            if (aiTokens >= 150) {
+                offensiveOptions.push('attackDrone');
+            }
+            
+            // Add offensive weapons to actions (prioritize higher damage weapons)
+            if (offensiveOptions.length > 0) {
+                // Sort by preference (ghost > bomber > drone)
+                offensiveOptions.sort(function(a, b) {
+                    const priorities = { 'ghost': 3, 'bomber': 2, 'attackDrone': 1 };
+                    return priorities[b] - priorities[a];
+                });
+                
+                // Add up to 2 offensive weapons
+                const maxOffensive = Math.min(2, offensiveOptions.length);
+                for (let i = 0; i < maxOffensive; i++) {
+                    actionsToTake.push(offensiveOptions[i]);
+                }
+            }
+            
+            // Execute AI actions with delays
+            executeAIActions(actionsToTake);
+        }
+        
+        function executeAIActions(actions) {
+            let actionIndex = 0;
+            
+            function executeNextAction() {
+                if (actionIndex >= actions.length || !gameState.gameStarted || gameState.currentPlayer !== 'ZOHON') {
+                    // After all purchases, decide whether to attack or end turn
+                    setTimeout(function() {
+                        makeAIAttackDecision();
+                    }, 800);
+                    return;
+                }
+                
+                const action = actions[actionIndex];
+                
+                // Check if we can still buy (within limits)
+                const totalPurchased = gameState.weaponsPurchasedThisTurn.ZOHON;
+                const offensivePurchased = gameState.offensiveWeaponsPurchasedThisTurn.ZOHON;
+                const isOffensive = isOffensiveWeapon(action);
+                
+                if (totalPurchased < 3 && (!isOffensive || offensivePurchased < 2)) {
+                    buyWeapon(action);
+                }
+                
+                actionIndex++;
+                
+                // Continue with next action after a delay
+                setTimeout(executeNextAction, 600);
+            }
+            
+            executeNextAction();
+        }
+        
+        function makeAIAttackDecision() {
+            if (!gameState.gameStarted || gameState.currentPlayer !== 'ZOHON') return;
+            
+            const inventory = gameState.inventory.ZOHON;
+            const hasWeapons = Object.keys(inventory).length > 0;
+            
+            if (hasWeapons) {
+                // Calculate potential damage
+                let potentialDamage = 0;
+                Object.entries(inventory).forEach(function(entry) {
+                    const weapon = entry[0];
+                    const count = entry[1];
+                    if (gameState.weaponDamage[weapon]) {
+                        potentialDamage += gameState.weaponDamage[weapon] * count;
+                    }
+                });
+                
+                // Attack if we have decent damage potential or enemy is low on health
+                if (potentialDamage >= 20 || gameState.cities.FARES.health <= 60) {
+                    setTimeout(function() {
+                        launchAttack();
+                    }, 1000);
+                } else {
+                    // End turn if damage is too low
+                    setTimeout(function() {
+                        endTurn();
+                    }, 1000);
+                }
+            } else {
+                // No weapons, just end turn
+                setTimeout(function() {
+                    endTurn();
+                }, 1000);
+            }
+        }
+
+        function resetGame() {
+            // Stop timer if running
+            if (gameState.timer.interval) {
+                clearInterval(gameState.timer.interval);
+                gameState.timer.interval = null;
+            }
+            
+            gameState = {
+                currentPlayer: 'FARES',
+                gameStarted: false,
+                aiMode: gameState.aiMode,
+                currentRound: 1,
+                roundsToWin: 3,
+                matchScore: { FARES: 0, ZOHON: 0 },
+                cities: {
+                    FARES: { health: 150, tokens: 1000, airDefense: 0, missileDefense: 0 },
+                    ZOHON: { health: 150, tokens: 1000, airDefense: 0, missileDefense: 0 }
+                },
+                inventory: {
+                    FARES: {},
+                    ZOHON: {}
+                },
+                weaponPrices: {
+                    standardMissile: 100,
+                    hypersonicMissile: 250,
+                    attackDrone: 150,
+                    bomber: 200,
+                    airDefense: 180,
+                    missileDefense: 220,
+                    repair: 50,
+                    ghost: 320
+                },
+                weaponDamage: {
+                    standardMissile: 20,
+                    hypersonicMissile: 30,
+                    attackDrone: 15,
+                    bomber: 25,
+                    ghost: 35
+                },
+                timer: {
+                    minutes: 2,
+                    seconds: 0,
+                    interval: null
+                },
+                weaponsPurchasedThisTurn: {
+                    FARES: 0,
+                    ZOHON: 0
+                },
+                offensiveWeaponsPurchasedThisTurn: {
+                    FARES: 0,
+                    ZOHON: 0
+                },
+                bonusBoxes: {
+                    dropped: 0,
+                    maxPerRound: 6
+                }
+            };
+            
+            // Return to menu music with a delay
+            setTimeout(function() {
+                playMusic('menu');
+            }, 200);
+            
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('roundResult').style.display = 'none';
+            document.querySelector('button[onclick="startGame()"]').style.display = 'inline-block';
+            
+            // Clear battlefield effects
+            const battlefield = document.getElementById('battlefield');
+            const effects = battlefield.querySelectorAll('.projectile, .explosion, .damage-indicator, .bonus-box, .bonus-indicator');
+            effects.forEach(function(effect) { effect.remove(); });
+            
+            updateDisplay();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (!gameState.gameStarted) return;
+            
+            switch(e.key) {
+                case '1': buyWeapon('standardMissile'); break;
+                case '2': buyWeapon('hypersonicMissile'); break;
+                case '3': buyWeapon('attackDrone'); break;
+                case '4': buyWeapon('bomber'); break;
+                case '5': buyWeapon('airDefense'); break;
+                case '6': buyWeapon('missileDefense'); break;
+                case '7': buyWeapon('repair'); break;
+                case '8': buyWeapon('ghost'); break;
+                case ' ': e.preventDefault(); launchAttack(); break;
+                case 'Enter': e.preventDefault(); endTurn(); break;
+                case 'm': e.preventDefault(); toggleMusic(); break;
+                case 's': e.preventDefault(); toggleSFX(); break;
+                case 'Escape': e.preventDefault(); hideInstructions(); break;
+                case 'h': case 'H': e.preventDefault(); showInstructions(); break;
+            }
+        });
+
+        // Initialize display and setup initial music
+        updateDisplay();
+        
+        let userHasInteracted = false;
+
+        // Enable audio and start menu music after user interaction
+        document.addEventListener('click', function() {
+            if (!userHasInteracted) {
+                userHasInteracted = true;
+                initAudio();
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                // Start menu music if we're not in game
+                if (!gameState.gameStarted && musicEnabled) {
+                    setTimeout(function() {
+                        playMusic('menu');
+                    }, 100);
+                }
+            }
+        });
+        
+        // Also try on any keypress
+        document.addEventListener('keydown', function() {
+            if (!userHasInteracted) {
+                userHasInteracted = true;
+                initAudio();
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                if (!gameState.gameStarted && musicEnabled) {
+                    setTimeout(function() {
+                        playMusic('menu');
+                    }, 100);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
