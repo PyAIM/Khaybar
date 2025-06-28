@@ -2,12 +2,12 @@
 
 **A strategic turn-based warfare game built with HTML5, CSS3, and JavaScript**
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://PyAIM.github.io/khaybar/)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://PyAIM.github.io/Khaybar/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## 🎮 Play Now
 
-**[▶️ Play KHAYBAR Online](https://PyAIM.github.io/khaybar/)**
+**[▶️ Play KHAYBAR Online](https://PyAIM.github.io/Khaybar/)**
 
 ## 📖 About
 
@@ -98,8 +98,8 @@ music/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/PyAIM/khaybar.git
-   cd khaybar
+   git clone https://github.com/PyAIM/Khaybar.git
+   cd Khaybar
 
 Add music files
 
